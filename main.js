@@ -5,7 +5,8 @@ const app = express();
 const port = 3000;
 var fs = require("fs");
 var template = require("./lib/template.js");
-
+var path = require("path");
+var sanitizeHtml = require("sanitize-html");
 app.get("/", (request, response) => {
   fs.readdir("./data", function (error, filelist) {
     var title = "Welcome";
@@ -21,9 +22,33 @@ app.get("/", (request, response) => {
   });
 });
 //app.get(path , callback)
-app.get("/page/:pageId", (req, res) => {
-  res.send(req.params);
+app.get("/page/:pageId", (request, response) => {
+  fs.readdir("./data", function (error, filelist) {
+    var filteredId = path.parse(request.params.pageId).base;
+    fs.readFile(`data/${filteredId}`, "utf8", function (err, description) {
+      var title = request.params.pageId;
+      var sanitizedTitle = sanitizeHtml(title);
+      var sanitizedDescription = sanitizeHtml(description, {
+        allowedTags: ["h1"],
+      });
+      var list = template.list(filelist);
+      var html = template.HTML(
+        sanitizedTitle,
+        list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
+        ` <a href="/create">create</a>
+            <a href="/update?id=${sanitizedTitle}">update</a>
+            <form action="delete_process" method="post">
+              <input type="hidden" name="id" value="${sanitizedTitle}">
+              <input type="submit" value="delete">
+            </form>`
+      );
+      response.send(html);
+    });
+  });
 });
+//HTML => req.params안에 들어가있음
+//pageId 를 통해서 {'pageId' :'HTML'}로 표현됨
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
@@ -32,8 +57,8 @@ app.listen(port, () => {
 var fs = require("fs");
 var url = require("url");
 var qs = require("querystring");
-var template = require("./lib/template.js");
-var path = require("path");
+
+
 var sanitizeHtml = require("sanitize-html");
 
 var app = http.createServer(function (request, response) {
@@ -42,19 +67,7 @@ var app = http.createServer(function (request, response) {
   var pathname = url.parse(_url, true).pathname;
   if (pathname === "/") {
     if (queryData.id === undefined) {
-      fs.readdir("./data", function (error, filelist) {
-        var title = "Welcome";
-        var description = "Hello, Node.js";
-        var list = template.list(filelist);
-        var html = template.HTML(
-          title,
-          list,
-          `<h2>${title}</h2>${description}`,
-          `<a href="/create">create</a>`
-        );
-        response.writeHead(200);
-        response.end(html);
-      });
+     
     } else {
       fs.readdir("./data", function (error, filelist) {
         var filteredId = path.parse(queryData.id).base;
