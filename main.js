@@ -41,7 +41,7 @@ app.get("/page/:pageId", (request, response) => {
         `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
         ` <a href="/create">create</a>
             <a href="/update?id=${sanitizedTitle}">update</a>
-            <form action="delete_process" method="post">
+            <form action="/delete_process" method="post">
               <input type="hidden" name="id" value="${sanitizedTitle}">
               <input type="submit" value="delete">
             </form>`
@@ -133,9 +133,27 @@ app.post("/update_process", (request, response) => {
     var description = post.description;
     fs.rename(`data/${id}`, `data/${title}`, function (error) {
       fs.writeFile(`data/${title}`, description, "utf8", function (err) {
-        response.writeHead(302, { Location: `/?id=${title}` });
-        response.end();
+        //response.writeHead(302, { Location: `/?id=${title}` });
+        //response.end();
+        response.redirect(`/?id=${title}`);
       });
+    });
+  });
+});
+
+app.post("/delete_process", (request, response) => {
+  var body = "";
+  request.on("data", function (data) {
+    body = body + data;
+  });
+  request.on("end", function () {
+    var post = qs.parse(body);
+    var id = post.id;
+    var filteredId = path.parse(id).base;
+    fs.unlink(`data/${filteredId}`, function (error) {
+      //response.writeHead(302, { Location: `/` });
+      //response.end();
+      response.redirect("/");
     });
   });
 });
