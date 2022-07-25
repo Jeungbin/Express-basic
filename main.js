@@ -1,11 +1,15 @@
 const express = require("express");
+// express 는 모듈이기에 express를 가져오는 것
 const app = express();
+//express 호출 , aplication이라는 객체가 담긴다.
 const port = 3000;
-
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("/");
 });
-
+//app.get(path , callback)
+app.get("/page", (req, res) => {
+  res.send("/page");
+});
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
