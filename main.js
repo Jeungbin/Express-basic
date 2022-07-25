@@ -21,8 +21,8 @@ app.get("/", (request, response) => {
   });
 });
 //app.get(path , callback)
-app.get("/page", (req, res) => {
-  res.send("/page");
+app.get("/page/:pageId", (req, res) => {
+  res.send(req.params);
 });
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
