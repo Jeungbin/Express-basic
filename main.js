@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // form data use liek this
 //bodyParser가 만든 미들웨어를 표현하는 표현식
 //main.js 실행 될때 'bodyParser.urlencoded({ extended: false })'실행됨
-app.get("/", (request, response) => {
+app.get("/", function (request, response) {
   fs.readdir("./data", function (error, filelist) {
     var title = "Welcome";
     var description = "Hello, Node.js";
@@ -29,7 +29,7 @@ app.get("/", (request, response) => {
   });
 });
 //app.get(path , callback)
-app.get("/page/:pageId", (request, response) => {
+app.get("/page/:pageId", function (request, response) {
   fs.readdir("./data", function (error, filelist) {
     var filteredId = path.parse(request.params.pageId).base;
     fs.readFile(`data/${filteredId}`, "utf8", function (err, description) {
@@ -44,11 +44,11 @@ app.get("/page/:pageId", (request, response) => {
         list,
         `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
         ` <a href="/create">create</a>
-            <a href="/update?id=${sanitizedTitle}">update</a>
-            <form action="/delete_process" method="post">
-              <input type="hidden" name="id" value="${sanitizedTitle}">
-              <input type="submit" value="delete">
-            </form>`
+          <a href="/update/${sanitizedTitle}">update</a>
+          <form action="/delete_process" method="post">
+            <input type="hidden" name="id" value="${sanitizedTitle}">
+            <input type="submit" value="delete">
+          </form>`
       );
       response.send(html);
     });
@@ -57,7 +57,7 @@ app.get("/page/:pageId", (request, response) => {
 //HTML => req.params안에 들어가있음
 //pageId 를 통해서 {'pageId' :'HTML'}로 표현됨
 
-app.get("/create", (request, response) => {
+app.get("/create", function (request, response) {
   fs.readdir("./data", function (error, filelist) {
     var title = "WEB - create";
     var list = template.list(filelist);
@@ -65,24 +65,23 @@ app.get("/create", (request, response) => {
       title,
       list,
       `
-        <form action="/create_process" method="post">
-          <p><input type="text" name="title" placeholder="title"></p>
-          <p>
-            <textarea name="description" placeholder="description"></textarea>
-          </p>
-          <p>
-            <input type="submit">
-          </p>
-        </form>
-      `,
+      <form action="/create_process" method="post">
+        <p><input type="text" name="title" placeholder="title"></p>
+        <p>
+          <textarea name="description" placeholder="description"></textarea>
+        </p>
+        <p>
+          <input type="submit">
+        </p>
+      </form>
+    `,
       ""
     );
     response.send(html);
   });
 });
 
-app.post("/create_process", (request, response) => {
-  /*var body = "";
+/*var body = "";
   request.on("data", function (data) {
     body = body + data;
   });
@@ -96,29 +95,14 @@ app.post("/create_process", (request, response) => {
     });
   });*/
 
-  // this is body-parser
+// this is body-parser
+app.post("/create_process", function (request, response) {
   var post = request.body;
   var title = post.title;
   var description = post.description;
   fs.writeFile(`data/${title}`, description, "utf8", function (err) {
     response.writeHead(302, { Location: `/?id=${title}` });
     response.end();
-  });
-});
-
-app.post("/create_process", function (request, response) {
-  var body = "";
-  request.on("data", function (data) {
-    body = body + data;
-  });
-  request.on("end", function () {
-    var post = qs.parse(body);
-    var title = post.title;
-    var description = post.description;
-    fs.writeFile(`data/${title}`, description, "utf8", function (err) {
-      response.writeHead(302, { Location: `/?id=${title}` });
-      response.end();
-    });
   });
 });
 
@@ -150,15 +134,13 @@ app.get("/update/:pageId", function (request, response) {
   });
 });
 
-app.post("/update_process", (request, response) => {
+app.post("/update_process", function (request, response) {
   var post = request.body;
   var id = post.id;
   var title = post.title;
   var description = post.description;
   fs.rename(`data/${id}`, `data/${title}`, function (error) {
     fs.writeFile(`data/${title}`, description, "utf8", function (err) {
-      //response.writeHead(302, { Location: `/?id=${title}` });
-      //response.end();
       response.redirect(`/?id=${title}`);
     });
   });
