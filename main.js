@@ -3,8 +3,22 @@ const express = require("express");
 const app = express();
 //express 호출 , aplication이라는 객체가 담긴다.
 const port = 3000;
-app.get("/", (req, res) => {
-  res.send("/");
+var fs = require("fs");
+var template = require("./lib/template.js");
+
+app.get("/", (request, response) => {
+  fs.readdir("./data", function (error, filelist) {
+    var title = "Welcome";
+    var description = "Hello, Node.js";
+    var list = template.list(filelist);
+    var html = template.HTML(
+      title,
+      list,
+      `<h2>${title}</h2>${description}`,
+      `<a href="/create">create</a>`
+    );
+    response.send(html);
+  });
 });
 //app.get(path , callback)
 app.get("/page", (req, res) => {
