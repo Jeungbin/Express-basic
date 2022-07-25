@@ -13,61 +13,71 @@ var compression = require("compression");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());
 //data 가 클경우 사용해서 data를 zip속에 넣어 둔다.
-
+app.get("*", (request, response, next) => {
+  // *는 모든 요청이라는 뜻
+  // get 방식으로 들어오는 code만 이용된다 / post 는 해당 안된
+  fs.readdir("./data", function (error, filelist) {
+    request.list = filelist;
+    next();
+    //다음에 호출해야할 middle ware
+  });
+});
 // form data use liek this
 //bodyParser가 만든 미들웨어를 표현하는 표현식
 //main.js 실행 될때 'bodyParser.urlencoded({ extended: false })'실행됨
 app.get("/", function (request, response) {
-  fs.readdir("./data", function (error, filelist) {
-    var title = "Welcome";
-    var description = "Hello, Node.js";
-    var list = template.list(filelist);
-    var html = template.HTML(
-      title,
-      list,
-      `<h2>${title}</h2>${description}`,
-      `<a href="/create">create</a>`
-    );
-    response.send(html);
-  });
+  // fs.readdir("./data", function (error, filelist) {
+  var title = "Welcome";
+  var description = "Hello, Node.js";
+  var list = template.list(request.list);
+  var html = template.HTML(
+    title,
+    list,
+    `<h2>${title}</h2>${description}`,
+    `<a href="/create">create</a>`
+  );
+  response.send(html);
 });
+
 //app.get(path , callback)
 app.get("/page/:pageId", function (request, response) {
-  fs.readdir("./data", function (error, filelist) {
-    var filteredId = path.parse(request.params.pageId).base;
-    fs.readFile(`data/${filteredId}`, "utf8", function (err, description) {
-      var title = request.params.pageId;
-      var sanitizedTitle = sanitizeHtml(title);
-      var sanitizedDescription = sanitizeHtml(description, {
-        allowedTags: ["h1"],
-      });
-      var list = template.list(filelist);
-      var html = template.HTML(
-        sanitizedTitle,
-        list,
-        `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-        ` <a href="/create">create</a>
+  console.log(request.list);
+  //[ 'expreww' ]
+  // fs.readdir("./data", function (error, filelist) {
+  var filteredId = path.parse(request.params.pageId).base;
+  fs.readFile(`data/${filteredId}`, "utf8", function (err, description) {
+    var title = request.params.pageId;
+    var sanitizedTitle = sanitizeHtml(title);
+    var sanitizedDescription = sanitizeHtml(description, {
+      allowedTags: ["h1"],
+    });
+    var list = template.list(request.list);
+    var html = template.HTML(
+      sanitizedTitle,
+      list,
+      `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
+      ` <a href="/create">create</a>
           <a href="/update/${sanitizedTitle}">update</a>
           <form action="/delete_process" method="post">
             <input type="hidden" name="id" value="${sanitizedTitle}">
             <input type="submit" value="delete">
           </form>`
-      );
-      response.send(html);
-    });
+    );
+    response.send(html);
   });
 });
+
 //HTML => req.params안에 들어가있음
 //pageId 를 통해서 {'pageId' :'HTML'}로 표현됨
 
 app.get("/create", function (request, response) {
-  fs.readdir("./data", function (error, filelist) {
-    var title = "WEB - create";
-    var list = template.list(filelist);
-    var html = template.HTML(
-      title,
-      list,
-      `
+  //fs.readdir("./data", function (error, filelist) {
+  var title = "WEB - create";
+  var list = template.list(request.list);
+  var html = template.HTML(
+    title,
+    list,
+    `
       <form action="/create_process" method="post">
         <p><input type="text" name="title" placeholder="title"></p>
         <p>
@@ -78,10 +88,9 @@ app.get("/create", function (request, response) {
         </p>
       </form>
     `,
-      ""
-    );
-    response.send(html);
-  });
+    ""
+  );
+  response.send(html);
 });
 
 /*var body = "";
@@ -100,6 +109,7 @@ app.get("/create", function (request, response) {
 
 // this is body-parser
 app.post("/create_process", function (request, response) {
+  console.log(request.list);
   var post = request.body;
   var title = post.title;
   var description = post.description;
@@ -110,15 +120,14 @@ app.post("/create_process", function (request, response) {
 });
 
 app.get("/update/:pageId", function (request, response) {
-  fs.readdir("./data", function (error, filelist) {
-    var filteredId = path.parse(request.params.pageId).base;
-    fs.readFile(`data/${filteredId}`, "utf8", function (err, description) {
-      var title = request.params.pageId;
-      var list = template.list(filelist);
-      var html = template.HTML(
-        title,
-        list,
-        `
+  var filteredId = path.parse(request.params.pageId).base;
+  fs.readFile(`data/${filteredId}`, "utf8", function (err, description) {
+    var title = request.params.pageId;
+    var list = template.list(request.list);
+    var html = template.HTML(
+      title,
+      list,
+      `
         <form action="/update_process" method="post">
           <input type="hidden" name="id" value="${title}">
           <p><input type="text" name="title" placeholder="title" value="${title}"></p>
@@ -130,10 +139,9 @@ app.get("/update/:pageId", function (request, response) {
           </p>
         </form>
         `,
-        `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`
-      );
-      response.send(html);
-    });
+      `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`
+    );
+    response.send(html);
   });
 });
 
@@ -163,51 +171,3 @@ app.post("/delete_process", (request, response) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-
-/*var http = require("http");
-var fs = require("fs");
-var url = require("url");
-
-
-
-var sanitizeHtml = require("sanitize-html");
-
-var app = http.createServer(function (request, response) {
-  var _url = request.url;
-  var queryData = url.parse(_url, true).query;
-  var pathname = url.parse(_url, true).pathname;
-  if (pathname === "/") {
-    if (queryData.id === undefined) {
-     
-    } else {
-   
-    }
-  } else if (pathname === "/create") {
- 
-  } else if (pathname === "/create_process") {
-  
-  } else if (pathname === "/update") {
-   
-  } else if (pathname === "/update_process") {
-   
-  } else if (pathname === "/delete_process") {
-    var body = "";
-    request.on("data", function (data) {
-      body = body + data;
-    });
-    request.on("end", function () {
-      var post = qs.parse(body);
-      var id = post.id;
-      var filteredId = path.parse(id).base;
-      fs.unlink(`data/${filteredId}`, function (error) {
-        response.writeHead(302, { Location: `/` });
-        response.end();
-      });
-    });
-  } else {
-    response.writeHead(404);
-    response.end("Not found");
-  }
-});
-app.listen(3000);
-*/
