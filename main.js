@@ -9,8 +9,11 @@ var qs = require("querystring");
 var sanitizeHtml = require("sanitize-html");
 var template = require("./lib/template.js");
 var bodyParser = require("body-parser");
-
+var compression = require("compression");
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(compression());
+//data 가 클경우 사용해서 data를 zip속에 넣어 둔다.
+
 // form data use liek this
 //bodyParser가 만든 미들웨어를 표현하는 표현식
 //main.js 실행 될때 'bodyParser.urlencoded({ extended: false })'실행됨
