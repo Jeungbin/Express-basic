@@ -8,18 +8,25 @@ var path = require("path");
 var qs = require("querystring");
 var sanitizeHtml = require("sanitize-html");
 var template = require("./lib/template.js");
+
+app.use(express.static("public"));
+
 var bodyParser = require("body-parser");
 var compression = require("compression");
 app.use(bodyParser.urlencoded({ extended: false }));
+
 app.use(compression());
 //data 가 클경우 사용해서 data를 zip속에 넣어 둔다.
 app.get("*", (request, response, next) => {
+  //app.use 라고하면 middle ware 로 등록
+  // res, response를 받아서 변형할수 있다.
   // *는 모든 요청이라는 뜻
   // get 방식으로 들어오는 code만 이용된다 / post 는 해당 안된
   fs.readdir("./data", function (error, filelist) {
     request.list = filelist;
     next();
-    //다음에 호출해야할 middle ware
+    //다음에 호출해야할 middle ware 실행할지 않할지를
+    // 그 미들웨어의 전 미들 웨어가 결정한다.
   });
 });
 // form data use liek this
@@ -27,13 +34,18 @@ app.get("*", (request, response, next) => {
 //main.js 실행 될때 'bodyParser.urlencoded({ extended: false })'실행됨
 app.get("/", function (request, response) {
   // fs.readdir("./data", function (error, filelist) {
+  //"/" 경로를 통해 특정 경로 에서만 미들웨어가 동작
+  // get방식인 경우에만 middle ware 동작
   var title = "Welcome";
   var description = "Hello, Node.js";
   var list = template.list(request.list);
   var html = template.HTML(
     title,
     list,
-    `<h2>${title}</h2>${description}`,
+    `<h2>${title}</h2>${description}
+    <img src='/images/hello.jpg' style='width:300px; display:block;'/>
+    `,
+
     `<a href="/create">create</a>`
   );
   response.send(html);
@@ -109,7 +121,8 @@ app.get("/create", function (request, response) {
 
 // this is body-parser
 app.post("/create_process", function (request, response) {
-  console.log(request.list);
+  //console.log(request.list);
+  //| undefined > 글 목록 data를 가져오지 않음
   var post = request.body;
   var title = post.title;
   var description = post.description;
