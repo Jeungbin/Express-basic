@@ -4,12 +4,11 @@ const app = express();
 //express 호출 , aplication이라는 객체가 담기고 이를 return해준다.
 const port = 3000;
 var fs = require("fs");
-var path = require("path");
-var qs = require("querystring");
-var sanitizeHtml = require("sanitize-html");
-var template = require("./lib/template.js");
 var topicRouter = require("./routes/topic");
 var indexRouter = require("./routes/index");
+var helmet = require("helmet");
+app.use(helmet());
+//15. 보안
 
 app.use(express.static("public"));
 //12. 정적인 파일의 서비스
