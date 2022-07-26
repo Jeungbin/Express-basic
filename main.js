@@ -9,6 +9,7 @@ var indexRouter = require("./routes/index");
 var helmet = require("helmet");
 app.use(helmet());
 //15. 보안
+//cockies = 인증에대한 내용
 
 app.use(express.static("public"));
 //12. 정적인 파일의 서비스
