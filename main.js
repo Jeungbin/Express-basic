@@ -9,6 +9,7 @@ var qs = require("querystring");
 var sanitizeHtml = require("sanitize-html");
 var template = require("./lib/template.js");
 var topicRouter = require("./routes/topic");
+var indexRouter = require("./routes/index");
 
 app.use(express.static("public"));
 //12. 정적인 파일의 서비스
@@ -35,29 +36,10 @@ app.get("*", (request, response, next) => {
 //bodyParser가 만든 미들웨어를 표현하는 표현식
 //main.js 실행 될때 'bodyParser.urlencoded({ extended: false })'실행됨
 
+app.use("/", indexRouter);
 app.use("/topic", topicRouter);
 ///topic으로 시작하는 주소 들에게 topicRouter라는 middle ware 를 적용한다.
 // '/topic'을 담 았을 경우 topic.js에서는 이를 호출할 필요가 없음
-
-app.get("/", function (request, response) {
-  // fs.readdir("./data", function (error, filelist) {
-  //"/" 경로를 통해 특정 경로 에서만 미들웨어가 동작
-  // get방식인 경우에만 middle ware 동작
-  var title = "Welcome";
-  var description = "Hello, Node.js";
-  var list = template.list(request.list);
-  var html = template.HTML(
-    title,
-    list,
-    `<h2>${title}</h2>${description}
-    <img src='/images/hello.jpg' style='width:300px; display:block;'/>
-    
-    `,
-    //12. 정적인 파일의 서비스
-    `<a href="/topic/create">create</a>`
-  );
-  response.send(html);
-});
 
 app.use(function (req, res, next) {
   res.status(404).send("Sorry cant find that!!");
