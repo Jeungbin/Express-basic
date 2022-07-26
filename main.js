@@ -10,7 +10,8 @@ var sanitizeHtml = require("sanitize-html");
 var template = require("./lib/template.js");
 
 app.use(express.static("public"));
-
+//12. 정적인 파일의 서비스
+// public folder 아래 있는 파일을 url을 통해 접근 가능
 var bodyParser = require("body-parser");
 var compression = require("compression");
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -44,38 +45,45 @@ app.get("/", function (request, response) {
     list,
     `<h2>${title}</h2>${description}
     <img src='/images/hello.jpg' style='width:300px; display:block;'/>
+    
     `,
-
+    //12. 정적인 파일의 서비스
     `<a href="/create">create</a>`
   );
   response.send(html);
 });
 
 //app.get(path , callback)
-app.get("/page/:pageId", function (request, response) {
-  console.log(request.list);
-  //[ 'expreww' ]
-  // fs.readdir("./data", function (error, filelist) {
+app.get("/page/:pageId", function (request, response, next) {
   var filteredId = path.parse(request.params.pageId).base;
+  // fs.readdir("./data", function (error, filelist) {
   fs.readFile(`data/${filteredId}`, "utf8", function (err, description) {
-    var title = request.params.pageId;
-    var sanitizedTitle = sanitizeHtml(title);
-    var sanitizedDescription = sanitizeHtml(description, {
-      allowedTags: ["h1"],
-    });
-    var list = template.list(request.list);
-    var html = template.HTML(
-      sanitizedTitle,
-      list,
-      `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-      ` <a href="/create">create</a>
+    if (err) {
+      next(err);
+      // next('') 아무런 값이 없으면 다음 midware을 바로 실행
+      // err 는 err를 던짐
+    } else {
+      var title = request.params.pageId;
+      var sanitizedTitle = sanitizeHtml(title);
+      var sanitizedDescription = sanitizeHtml(description, {
+        allowedTags: ["h1"],
+      });
+      var list = template.list(request.list);
+      //console.log(request.list);
+      //[ 'expreww' ]
+      var html = template.HTML(
+        sanitizedTitle,
+        list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
+        ` <a href="/create">create</a>
           <a href="/update/${sanitizedTitle}">update</a>
           <form action="/delete_process" method="post">
             <input type="hidden" name="id" value="${sanitizedTitle}">
             <input type="submit" value="delete">
           </form>`
-    );
-    response.send(html);
+      );
+      response.send(html);
+    }
   });
 });
 
@@ -181,6 +189,17 @@ app.post("/delete_process", (request, response) => {
   });
 });
 
+app.use(function (req, res, next) {
+  res.status(404).send("Sorry cant find that!!");
+});
+//13. 에러처리
+// midware 는 순차적으로 실행이 된다.
+// 모든 midware 실행이 된후에 여기까지 왔을때 404 보내서 에러 메세지를 보낸다.
+app.use(function (err, req, res, next) {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
+});
+// next(err) 시에 바로 인자가 4개인 err가 호출
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
