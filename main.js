@@ -4,6 +4,7 @@ const app = express();
 //express 호출 , aplication이라는 객체가 담기고 이를 return해준다.
 const port = 3000;
 var fs = require("fs");
+//fs module (= File System module) 이란, 파일 처리와 관련된 전반적인 작업
 var topicRouter = require("./routes/topic");
 var indexRouter = require("./routes/index");
 var helmet = require("helmet");
